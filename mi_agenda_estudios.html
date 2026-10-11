@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#6558d3">
+<title>Mi Agenda de Estudios</title>
+<style>
+:root{--bg:#f6f5fb;--card:#fff;--ink:#24233a;--muted:#77758d;--accent:#6558d3;--soft:#eeebff;--line:#e9e7f2;--green:#258568;--red:#c84e62}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{padding:26px 18px 20px;background:linear-gradient(135deg,#6558d3,#887be8);color:white;border-radius:0 0 26px 26px}
+header .eyebrow{font-size:12px;opacity:.85;letter-spacing:.08em;text-transform:uppercase}h1{font-size:27px;margin:7px 0 6px}header p{margin:0;opacity:.9;font-size:14px}
+main{max-width:760px;margin:auto;padding:16px 14px 100px}.tabs{display:flex;gap:7px;background:#eae8f5;padding:5px;border-radius:14px;position:sticky;top:6px;z-index:2}
+.tabs button{flex:1;border:0;border-radius:10px;padding:11px 4px;background:transparent;color:#66627c;font-weight:650;font-size:13px}.tabs button.active{background:white;color:var(--accent);box-shadow:0 2px 7px #30256b12}
+.view{display:none}.view.active{display:block}.sectionhead{display:flex;align-items:center;justify-content:space-between;margin:23px 2px 12px}.sectionhead h2{font-size:19px;margin:0}.muted{color:var(--muted);font-size:13px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:16px}.stat,.card{background:var(--card);border:1px solid var(--line);border-radius:17px;padding:14px}.stat strong{display:block;font-size:23px}.stat span{font-size:12px;color:var(--muted)}
+.card{margin-bottom:10px}.itemtop{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.itemtitle{font-weight:700}.itemsub{font-size:13px;color:var(--muted);margin-top:5px}.pill{font-size:11px;padding:5px 8px;border-radius:999px;background:var(--soft);color:var(--accent);white-space:nowrap}.pill.done{background:#e2f5ee;color:var(--green)}.pill.overdue{background:#ffeaee;color:var(--red)}
+button{cursor:pointer} .primary{border:0;border-radius:12px;background:var(--accent);color:white;padding:11px 14px;font-weight:700}.secondary{border:1px solid var(--line);background:white;color:var(--ink);border-radius:10px;padding:8px 10px;font-weight:600}.danger{color:var(--red)}.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
+form{background:white;border:1px solid var(--line);border-radius:17px;padding:15px;margin-bottom:14px}form h3{margin:0 0 12px;font-size:16px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.field{display:flex;flex-direction:column;gap:6px;margin-bottom:11px}.field.full{grid-column:1/-1}label{font-size:12px;font-weight:700;color:#65627a}input,select,textarea{width:100%;min-width:0;border:1px solid #dedbea;border-radius:10px;padding:11px;background:#fff;color:var(--ink);font:inherit;font-size:14px}textarea{resize:vertical}.empty{text-align:center;padding:24px 12px;color:var(--muted);background:#fff;border:1px dashed #d8d4e9;border-radius:16px}.empty strong{display:block;color:var(--ink);margin-bottom:5px}
+.filters{display:flex;gap:8px;align-items:center;margin-bottom:12px}.filters select{flex:1}
+.grade-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}.grade-box{background:#f8f7fd;border-radius:11px;padding:10px}.grade-box span{display:block;font-size:11px;color:var(--muted)}.grade-box strong{font-size:18px}
+footer{position:fixed;bottom:0;left:0;right:0;background:#ffffffed;backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:9px 14px calc(9px + env(safe-area-inset-bottom));text-align:center;font-size:11px;color:var(--muted)}
+@media(min-width:620px){header{padding:32px max(calc((100% - 720px)/2),24px)}main{padding-top:22px}.tabs button{font-size:14px}.stats{gap:12px}}
+</style>
+</head>
+<body>
+<header><div class="eyebrow">Tu espacio de estudio</div><h1>Mi Agenda 📚</h1><p>Organiza tus tareas, prepara tus exámenes y sigue tus notas.</p></header>
+<main>
+<nav class="tabs" aria-label="Secciones">
+<button class="active" data-tab="home">Inicio</button><button data-tab="agenda">Agenda</button><button data-tab="grades">Mis notas</button>
+</nav>
+<section id="home" class="view active">
+<div class="stats">
+<div class="stat"><strong id="statTasks">0</strong><span>Tareas pendientes</span></div>
+<div class="stat"><strong id="statExams">0</strong><span>Exámenes próximos</span></div>
+<div class="stat"><strong id="statAverage">—</strong><span>Media registrada</span></div>
+</div>
+<div class="sectionhead"><h2>Para hoy</h2><span id="todayLabel" class="muted"></span></div><div id="todayList"></div>
+<div class="sectionhead"><h2>Próximos exámenes</h2><button class="secondary" onclick="switchTab('agenda')">Ver agenda</button></div><div id="upcomingList"></div>
+</section>
+<section id="agenda" class="view">
+<div class="sectionhead"><h2>Agenda</h2><span class="muted">Tareas y exámenes</span></div>
+<form id="taskForm"><h3>➕ Añadir tarea o examen</h3>
+<div class="grid">
+<div class="field"><label for="kind">Tipo</label><select id="kind"><option value="task">Tarea / entrega</option><option value="exam">Examen</option></select></div>
+<div class="field"><label for="subject">Asignatura</label><input id="subject" placeholder="Ej. Matemáticas" required list="subjectsList"><datalist id="subjectsList"></datalist></div>
+<div class="field"><label for="date">Fecha</label><input id="date" type="date" required></div>
+<div class="field"><label for="time">Hora (opcional)</label><input id="time" type="time"></div>
+<div class="field full"><label for="description">Qué tienes que hacer / tema</label><input id="description" placeholder="Ej. Repasar matrices o entregar comentario"></div>
+</div><button class="primary" type="submit">Guardar en agenda</button>
+</form>
+<div class="filters"><select id="agendaFilter"><option value="all">Todo</option><option value="task">Solo tareas</option><option value="exam">Solo exámenes</option><option value="pending">Pendientes</option><option value="done">Completadas</option></select><select id="termFilter"><option value="all">Todos los trimestres</option><option value="1">1.º trimestre</option><option value="2">2.º trimestre</option><option value="3">3.º trimestre</option></select></div>
+<div id="agendaList"></div>
+</section>
+<section id="grades" class="view">
+<div class="sectionhead"><h2>Mis notas</h2><span class="muted">Dos exámenes por trimestre</span></div>
+<form id="gradeForm"><h3>✍️ Registrar notas</h3>
+<div class="grid">
+<div class="field"><label for="gradeSubject">Asignatura</label><input id="gradeSubject" placeholder="Ej. Historia" required list="subjectsList"></div>
+<div class="field"><label for="term">Trimestre</label><select id="term"><option value="1">1.º trimestre</option><option value="2">2.º trimestre</option><option value="3">3.º trimestre</option></select></div>
+<div class="field"><label for="exam1">Examen 1 (0–10)</label><input id="exam1" type="number" min="0" max="10" step="0.01" placeholder="Ej. 7,5"></div>
+<div class="field"><label for="exam2">Examen 2 (0–10)</label><input id="exam2" type="number" min="0" max="10" step="0.01" placeholder="Ej. 8"></div>
+</div><p class="muted">Introduce una o las dos notas. La media se calcula con las notas que hayas añadido.</p><button class="primary" type="submit">Guardar notas</button>
+</form>
+<div class="filters"><select id="gradeTermFilter"><option value="all">Todos los trimestres</option><option value="1">1.º trimestre</option><option value="2">2.º trimestre</option><option value="3">3.º trimestre</option></select></div>
+<div id="gradeList"></div>
+</section>
+</main>
+<footer>Los datos se guardan en este navegador de este dispositivo. Exporta una copia si cambias de móvil.</footer>
+<script>
+const $=id=>document.getElementById(id);
+const key='miAgendaEstudios_v1';
+let data={items:[],grades:[]};
+try{data=JSON.parse(localStorage.getItem(key))||data}catch(e){}
+const today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
+$('date').value=today();
+$('todayLabel').textContent=new Date().toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short'});
+function save(){localStorage.setItem(key,JSON.stringify(data));render()}
+function switchTab(id){document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===id));document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));window.scrollTo({top:0,behavior:'smooth'});render()}
+document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function fmtDate(s){if(!s)return '';return new Date(s+'T12:00:00').toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'})}
+function termOf(date){if(!date)return '1';let m=Number(date.slice(5,7));return m>=9||m===1?'1':m>=2&&m<=3?'2':'3'}
+function termLabel(t){return ({1:'1.º trimestre',2:'2.º trimestre',3:'3.º trimestre'})[t]||'Trimestre'}
+function avg(nums){let a=nums.filter(n=>n!==null&&n!==undefined&&n!=='').map(Number);return a.length?(a.reduce((x,y)=>x+y,0)/a.length):null}
+function nfmt(n){return n===null?'—':n.toLocaleString('es-ES',{minimumFractionDigits:0,maximumFractionDigits:2})}
+function itemCard(it){let status=it.done?'Completada':it.date<today()?'Pendiente · pasada':'Pendiente';let pill=it.done?'done':it.date<today()?'overdue':'';return `<article class="card"><div class="itemtop"><div><div class="itemtitle">${it.kind==='exam'?'📝':'☑️'} ${esc(it.subject)}</div><div class="itemsub">${esc(it.description|| (it.kind==='exam'?'Examen':'Tarea'))} · ${fmtDate(it.date)}${it.time?' · '+esc(it.time):''}</div></div><span class="pill ${pill}">${status}</span></div><div class="actions">${!it.done?`<button class="secondary" onclick="toggleDone('${it.id}')">Marcar hecha</button>`:`<button class="secondary" onclick="toggleDone('${it.id}')">Reabrir</button>`}<button class="secondary danger" onclick="deleteItem('${it.id}')">Eliminar</button></div></article>`}
+function listOrEmpty(el,items,msg){$(el).innerHTML=items.length?items.map(itemCard).join(''):`<div class="empty"><strong>${msg}</strong>Añade una tarea o examen para empezar.</div>`}
+function render(){
+ const pending=data.items.filter(i=>!i.done&&i.kind==='task').length;
+ const exams=data.items.filter(i=>i.kind==='exam'&&!i.done&&i.date>=today()).length;
+ const avgs=data.grades.map(g=>avg([g.e1,g.e2])).filter(x=>x!==null);
+ $('statTasks').textContent=pending;$('statExams').textContent=exams;$('statAverage').textContent=avgs.length?nfmt(avg(avgs)):'—';
+ const todayItems=data.items.filter(i=>i.date===today()&&!i.done).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+ listOrEmpty('todayList',todayItems,'¡Día despejado!');
+ const upcoming=data.items.filter(i=>i.kind==='exam'&&!i.done&&i.date>=today()).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,4);
+ listOrEmpty('upcomingList',upcoming,'Todavía no hay exámenes próximos');
+ const f=$('agendaFilter').value,tf=$('termFilter').value;
+ let its=data.items.slice().sort((a,b)=>a.date.localeCompare(b.date)||(a.time||'').localeCompare(b.time||''));
+ its=its.filter(i=>(f==='all'||f==='pending'&&!i.done||f==='done'&&i.done||i.kind===f)&&(tf==='all'||termOf(i.date)===tf));
+ listOrEmpty('agendaList',its,'No hay elementos con este filtro');
+ const gt=$('gradeTermFilter').value;
+ let gs=data.grades.filter(g=>gt==='all'||g.term===gt).sort((a,b)=>a.subject.localeCompare(b.subject));
+ $('gradeList').innerHTML=gs.length?gs.map(g=>{let a=avg([g.e1,g.e2]);return `<article class="card"><div class="itemtop"><div><div class="itemtitle">${esc(g.subject)}</div><div class="itemsub">${termLabel(g.term)}</div></div><span class="pill">Media: ${nfmt(a)}</span></div><div class="grade-row"><div class="grade-box"><span>Examen 1</span><strong>${g.e1===''||g.e1===null?'—':nfmt(Number(g.e1))}</strong></div><div class="grade-box"><span>Examen 2</span><strong>${g.e2===''||g.e2===null?'—':nfmt(Number(g.e2))}</strong></div><div class="grade-box"><span>Media</span><strong>${nfmt(a)}</strong></div></div><div class="actions"><button class="secondary danger" onclick="deleteGrade('${g.id}')">Eliminar registro</button></div></article>`}).join(''):`<div class="empty"><strong>Aún no has registrado notas</strong>Añade los resultados de tus exámenes.</div>`;
+ const subs=[...new Set([...data.items.map(i=>i.subject),...data.grades.map(g=>g.subject)].filter(Boolean))].sort();
+ $('subjectsList').innerHTML=subs.map(s=>`<option value="${esc(s)}"></option>`).join('');
+}
+$('taskForm').addEventListener('submit',e=>{e.preventDefault();data.items.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),kind:$('kind').value,subject:$('subject').value.trim(),date:$('date').value,time:$('time').value,description:$('description').value.trim(),done:false});e.target.reset();$('date').value=today();save();switchTab('agenda')});
+$('gradeForm').addEventListener('submit',e=>{e.preventDefault();const subject=$('gradeSubject').value.trim(),term=$('term').value,e1=$('exam1').value,e2=$('exam2').value;if(e1===''&&e2===''){alert('Añade al menos una nota.');return}if([e1,e2].some(x=>x!==''&&(Number(x)<0||Number(x)>10))){alert('Las notas deben estar entre 0 y 10.');return}const idx=data.grades.findIndex(g=>g.subject.toLowerCase()===subject.toLowerCase()&&g.term===term);const g={id:idx>=0?data.grades[idx].id:(crypto.randomUUID?crypto.randomUUID():String(Date.now())),subject,term,e1,e2};if(idx>=0)data.grades[idx]=g;else data.grades.push(g);e.target.reset();save();switchTab('grades')});
+$('agendaFilter').addEventListener('change',render);$('termFilter').addEventListener('change',render);$('gradeTermFilter').addEventListener('change',render);
+window.toggleDone=id=>{const i=data.items.find(x=>x.id===id);if(i)i.done=!i.done;save()};
+window.deleteItem=id=>{if(confirm('¿Eliminar este elemento de la agenda?')){data.items=data.items.filter(x=>x.id!==id);save()}};
+window.deleteGrade=id=>{if(confirm('¿Eliminar este registro de notas?')){data.grades=data.grades.filter(x=>x.id!==id);save()}};
+render();
+</script>
+</body>
+</html>
